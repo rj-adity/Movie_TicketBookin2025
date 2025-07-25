@@ -1,5 +1,5 @@
 import { Inngest } from "inngest";
-import User from "../models/User.js";
+import User from "../../models/User.js";
 
 export const inngest = new Inngest({ id: "movie-ticket-booking" });
 
@@ -12,7 +12,7 @@ const syncUserCreation = inngest.createFunction(
 
     const userData = {
       _id: id,
-      email: email_addresses[0].email_address,  // Fixed typo: email_adresses -> email_addresses
+      email: email_addresses[0].email_address,
       name: first_name + " " + last_name,
       image: image_url,
     };
@@ -40,7 +40,7 @@ const syncUserUpdation = inngest.createFunction(
 
     const userData = {
       _id: id,
-      email: email_addresses[0].email_address,  // Fixed typo here as well
+      email: email_addresses[0].email_address,
       name: first_name + " " + last_name,
       image: image_url,
     };
