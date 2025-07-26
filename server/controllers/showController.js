@@ -44,7 +44,7 @@ export const addShow = async (req, res) => {
             ]);
 
             const movieApiData = movieDetailsResponse.data;
-            const movieCreditData = movieCreditsResponse.data;
+            const movieCreditsData = movieCreditsResponse.data;
 
             const movieDetails = {
                 _id: movieId,
@@ -53,7 +53,7 @@ export const addShow = async (req, res) => {
                 poster_path: movieApiData.poster_path,
                 backdrop_path: movieApiData.backdrop_path,
                 genres: movieApiData.genres,
-                casts: movieCreditData.cast,
+                casts: movieCreditsData.cast,
                 release_date: movieApiData.release_date,
                 original_language: movieApiData.original_language,
                 tagline: movieApiData.tagline || "",
@@ -89,4 +89,35 @@ export const addShow = async (req, res) => {
         console.error(error);
         res.json({ success: false, message: error.message });
     }
-};
+}
+
+//API to get all shows from the database
+export const getShows = async (req, res) => {
+    try {
+        const shows= await Show.find({showDateTime: {$gte: new Date()}}).populate('movie').sort({showDateTime: 1});
+
+        // filtering unique shows
+        const uniqueShows= new Set(shows.map(show => show.movie))
+
+        res.json({success: true, shows: Array.from(uniqueShows) })
+    } catch (error) {
+        console.error(error);
+        res.json({success: false, message: error.message});
+        
+    }    
+}
+
+//API to get the single show from the database
+export const getShow = async(req, res)=>{
+    try {
+        const {movieId} = req.params;
+
+        // getting all upcoming shows for the movie
+        const shows = await Show.find({movie: movieId, showDateTime: {$gte : new Date()}})
+
+        const movie = await Movie.findById(movieId);
+        const dateTime ={};
+    } catch (error) {
+        
+    }
+}
