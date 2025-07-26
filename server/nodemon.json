@@ -1,0 +1,21 @@
+{
+  "watch": [
+    "server.js",
+    "controllers/",
+    "models/",
+    "routes/",
+    "middleware/",
+    "configs/",
+    "src/"
+  ],
+  "ext": "js,json",
+  "ignore": [
+    "node_modules/",
+    "test-endpoints.js",
+    "*.log"
+  ],
+  "delay": "1000",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}
