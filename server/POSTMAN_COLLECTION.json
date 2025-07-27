@@ -1,0 +1,141 @@
+{
+  "info": {
+    "name": "Movie Ticket Booking API",
+    "description": "Complete API collection for testing movie booking server",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": [""]
+        }
+      }
+    },
+    {
+      "name": "2. Get All Shows",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/show/all",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "show", "all"]
+        }
+      }
+    },
+    {
+      "name": "3. Add Movie Show - Spider-Man",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_CLERK_TOKEN_HERE",
+            "description": "Replace with actual Clerk token"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"movieId\": \"558449\",\n  \"showPrice\": 250,\n  \"showsInput\": [\n    {\n      \"date\": \"2025-07-27\",\n      \"time\": [\"10:00\", \"14:00\", \"18:00\", \"21:00\"]\n    },\n    {\n      \"date\": \"2025-07-28\",\n      \"time\": [\"11:00\", \"15:00\", \"19:00\", \"22:00\"]\n    },\n    {\n      \"date\": \"2025-07-29\",\n      \"time\": [\"12:00\", \"16:00\", \"20:00\"]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/show/add",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "show", "add"]
+        }
+      }
+    },
+    {
+      "name": "4. Add Movie Show - Avengers",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_CLERK_TOKEN_HERE",
+            "description": "Replace with actual Clerk token"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"movieId\": \"299536\",\n  \"showPrice\": 300,\n  \"showsInput\": [\n    {\n      \"date\": \"2025-07-27\",\n      \"time\": [\"09:00\", \"13:00\", \"17:00\", \"21:30\"]\n    },\n    {\n      \"date\": \"2025-07-28\",\n      \"time\": [\"10:30\", \"14:30\", \"18:30\", \"22:30\"]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/show/add",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "show", "add"]
+        }
+      }
+    },
+    {
+      "name": "5. Get Spider-Man Shows",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/show/558449",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "show", "558449"]
+        }
+      }
+    },
+    {
+      "name": "6. Get Avengers Shows",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/show/299536",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "show", "299536"]
+        }
+      }
+    },
+    {
+      "name": "7. Get Now Playing Movies (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer YOUR_CLERK_TOKEN_HERE",
+            "description": "Replace with actual Clerk token"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:3000/api/show/now-playing",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "show", "now-playing"]
+        }
+      }
+    }
+  ]
+}

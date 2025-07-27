@@ -2,28 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import connectDB from './configs/db.js';
-import { clerkMiddleware } from '@clerk/express'
+import { clerkMiddleware } from '@clerk/express';
 import { serve } from "inngest/express";
-import { inngest, functions } from "./src/inngest/index.js"
+import { inngest, functions } from "./src/inngest/index.js";
 import showRouter from './routes/showRoutes.js';
+import adminRouter from './routes/adminRoutes.js';
+import userRouter from './routes/userRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
-
-// Initialize database connection
-let dbConnected = false;
-
-const initializeDB = async () => {
-    if (!dbConnected) {
-        try {
-            await connectDB();
-            dbConnected = true;
-            console.log('Database initialized successfully');
-        } catch (error) {
-            console.error('Database initialization failed:', error);
-        }
-    }
-};
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -34,12 +21,6 @@ app.use(cors({
     credentials: true
 }));
 app.use(clerkMiddleware());
-
-// Initialize DB before handling requests
-app.use(async (req, res, next) => {
-    await initializeDB();
-    next();
-});
 
 // API Routes
 app.get('/', (req, res) => {
@@ -52,6 +33,8 @@ app.get('/', (req, res) => {
 
 app.use('/api/inngest', serve({ client: inngest, functions }));
 app.use('/api/show', showRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/user', userRouter);
 
 // Error handling middleware
 app.use((error, req, res, next) => {
@@ -71,32 +54,37 @@ app.use('*', (req, res) => {
     });
 });
 
-// Function to find available port
-const findAvailablePort = (startPort) => {
-    return new Promise((resolve) => {
-        const server = app.listen(startPort, () => {
-            const actualPort = server.address().port;
-            console.log(`✅ Server Running at http://localhost:${actualPort}`);
-            console.log(`📊 Database: Connected`);
-            console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
-            resolve(server);
-        });
+// Main function to start the server
+const startServer = async () => {
+    try {
+        // 1. Connect to the database
+        await connectDB();
+        console.log('📊 Database: Connected');
 
-        server.on('error', (err) => {
+        // 2. Start listening for requests ONLY after the DB is connected
+        app.listen(port, () => {
+            console.log(`✅ Server Running at http://localhost:${port}`);
+            console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
+        }).on('error', (err) => {
+            // Handle port-in-use error if you still need that functionality
             if (err.code === 'EADDRINUSE') {
-                console.log(`⚠️  Port ${startPort} is busy, trying ${startPort + 1}...`);
-                findAvailablePort(startPort + 1).then(resolve);
+                console.log(`⚠️  Port ${port} is busy, please use a different port.`);
             } else {
                 console.error('❌ Server error:', err);
-                process.exit(1);
             }
+            process.exit(1);
         });
-    });
+
+    } catch (error) {
+        console.error('Database initialization failed:', error);
+        process.exit(1);
+    }
 };
 
-// For Vercel serverless deployment
+// Start the server
 if (process.env.NODE_ENV !== 'production') {
-    findAvailablePort(port);
+    startServer();
 }
 
+// For Vercel serverless deployment
 export default app;
