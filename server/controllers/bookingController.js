@@ -1,5 +1,6 @@
 import Booking from "../models/Booking.js";
 import Show from "../models/Show.js"
+import stripe from 'stripe'
 
 
 // Function to check avilability for the selected seats for a movie
@@ -20,7 +21,7 @@ const checkSeatsAvailability = async (showId, selectedSeats) => {
 
 export const createBooking = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const userId = req.auth.userId || (req.auth && req.auth.userId);
         const { showId, selectedSeats } = req.body;
         const { origin } = req.headers;
 
@@ -53,9 +54,37 @@ export const createBooking = async (req, res) => {
 
         // Stripe Gateway Initialize
 
+        const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
+        // Creating Line items for stripe
+        const lineitems = [{
+            price_data: {
+                currency : 'inr',
+                product_data: {
+                    name: showData.movie.title
+                },
+                unit_amount : Math.floor(booking.amount) * 100       
+            },
+            quantity: 1
+        }]
+
+        const session = await stripeInstance.checkout.sessions.create({
+            success_url : `${origin }/loading/my-bookings`,
+            cancel_url : `${origin }/my-bookings`,
+            line_items: lineitems,
+            mode: 'payment',
+            metadata:{
+                bookingId: booking._id.toString(),         
+            },
+            expires_at: Math.floor(Date.now() / 1000) + 30 * 60,  // expires in thirty minutes
+        })
+
+        booking.paymentLink = session.url;
+        await booking.save()
+
+
         res.json({
             success: true,
-            message: 'Booking created successfully',
+            url: session.url
         })
     } catch (error) {
         console.log(error.message);

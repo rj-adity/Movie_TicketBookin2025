@@ -19,9 +19,6 @@ export const AppProvider = ({ children }) => {
     const { getToken } = useAuth();
     const navigate = useNavigate();
 
-    // Inside src/context/AppContext.js
-
-// ... (imports and other functions) ...
 
 // --- ADD LOGS TO THIS FUNCTION ---
 const fetchIsAdmin = async () => {

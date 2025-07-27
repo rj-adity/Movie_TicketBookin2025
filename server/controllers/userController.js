@@ -3,8 +3,29 @@ import Booking from "../models/Booking.js";
 import Movie from "../models/Movies.js";
 import mongoose from "mongoose";
 
-// Get user bookings (no changes needed here)
-export const getUserBookings = async (req, res) => { /* ... */ };
+// Get user bookings
+export const getUserBookings = async (req, res) => {
+  try {
+    const userId = req.auth().userId;
+    const bookings = await Booking.find({ user: userId }).populate({
+      path: 'show',
+      populate: {
+        path: 'movie',
+        model: 'Movie'
+      }
+    });
+    res.json({
+      success: true,
+      bookings
+    });
+  } catch (error) {
+    console.error("Error in getUserBookings:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching bookings."
+    });
+  }
+};
 
 // --- ADDING DEBUGGING TO THIS FUNCTION ---
 export const updateFavorite = async (req, res) => {
