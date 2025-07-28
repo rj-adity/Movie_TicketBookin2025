@@ -14,7 +14,11 @@ import { stripeWebhooks, testWebhook } from './controllers/stripeWebhooks.js';
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
+// Stripe webhook routes FIRST (no body parsing before this)
+app.get('/api/stripe/test', testWebhook);
+app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks );
+
+// Now add body parsing and CORS for all other routes
 app.use(express.json({ limit: '10mb' }));
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
@@ -22,11 +26,6 @@ app.use(cors({
         : ['http://localhost:3000', 'http://localhost:5173'],
     credentials: true
 }));
-
-// Register the test endpoint BEFORE the raw middleware
-app.get('/api/stripe/test', testWebhook);
-// Only the webhook endpoint uses express.raw
-app.use('/api/stripe', express.raw({type: 'application/json' }), stripeWebhooks );
 
 app.use(clerkMiddleware());
 
