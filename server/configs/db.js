@@ -20,7 +20,7 @@ const connectDB = async () => {
             family: 4
         };
 
-        const conn = await mongoose.connect(`${process.env.MONGODB_URI}/Chitrapat`, options);
+        const conn = await mongoose.connect(`${process.env.MONGODB_URI}`);
         
         isConnected = true;
         console.log(`Database Connected: ${conn.connection.host}`);

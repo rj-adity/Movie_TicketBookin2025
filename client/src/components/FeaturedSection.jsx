@@ -27,6 +27,33 @@ const FeaturedSection = () => {
   }
   // After this check, it is guaranteed that `shows` is an array (even if empty).
 
+  // If no shows are available, show a message
+  if (shows.length === 0) {
+    return (
+      <div className='px-6 md:px-16 lg:px-24 xl:px-44 overflow-hidden'>
+        <div className='relative flex items-center justify-between pt-20 pb-10'>
+          <BlurCircle top='0' right='-80px' />
+          <p className='text-gray-300 font-medium text-lg'>Now Showing</p>
+        </div>
+
+        <div className='flex flex-col items-center justify-center py-20'>
+          <div className='text-center max-w-md'>
+            <h2 className='text-2xl font-bold mb-4 text-gray-300'>No Movies Currently Showing</h2>
+            <p className='text-gray-400 mb-6'>
+              No movies have been scheduled for showing yet. Check back later for new releases.
+            </p>
+            <button
+              onClick={() => navigate('/movies')}
+              className='px-6 py-2 text-sm bg-primary hover:bg-primary-dull transition rounded-md font-medium cursor-pointer'
+            >
+              Check Movies Page
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='px-6 md:px-16 lg:px-24 xl:px-44 overflow-hidden'>
       <div className='relative flex items-center justify-between pt-20 pb-10'>

@@ -9,7 +9,7 @@ import showRouter from './routes/showRoutes.js';
 import adminRouter from './routes/adminRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import bookingRouter from './routes/bookingRoutes.js';
-import { stripeWebhooks } from './controllers/stripeWebhooks.js';
+import { stripeWebhooks, testWebhook } from './controllers/stripeWebhooks.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -23,8 +23,10 @@ app.use(cors({
     credentials: true
 }));
 
-
-app.use('/api/stripe', express.raw({type: 'application/json' }), stripeWebhooks )
+// Register the test endpoint BEFORE the raw middleware
+app.get('/api/stripe/test', testWebhook);
+// Only the webhook endpoint uses express.raw
+app.use('/api/stripe', express.raw({type: 'application/json' }), stripeWebhooks );
 app.use(clerkMiddleware());
 
 // API Routes

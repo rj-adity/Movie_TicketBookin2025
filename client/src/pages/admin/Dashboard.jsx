@@ -37,13 +37,14 @@ const Dashboard = () => {
       const { data } = await axios.get('/api/admin/dashboard', {
         headers: { Authorization: `Bearer ${await getToken()}` }
       });
+      
       if (data.success) {
         setDashboardData(data.dashboardData);
       } else {
         toast.error(data.message || 'Failed to fetch dashboard data');
       }
     } catch (error) {
-      console.error(error);
+      console.error('Dashboard data fetch error:', error);
       toast.error('Error fetching dashboard data. Please try again later.');
     } finally {
       setLoading(false);
@@ -54,6 +55,17 @@ const Dashboard = () => {
     if (user) {
       fetchDashboardData();
     }
+  }, [user]);
+
+  // Auto-refresh every 30 seconds to keep data updated
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, [user]);
 
   if (loading) return <Loading />;
@@ -108,7 +120,7 @@ const Dashboard = () => {
               {/* Rating on right */}
               <p className='flex items-center gap-1 text-sm text-gray-400 mt-1 pr-1'>
                 <StarIcon className='w-4 h-4 text-primary fill-primary' />
-                {show.movie.vote_average.toFixed(1)}
+                {show.movie.vote_average?.toFixed(1) || 'N/A'}
               </p>
             </div>
 

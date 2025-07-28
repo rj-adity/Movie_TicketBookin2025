@@ -19,7 +19,17 @@ const Movies = () => {
     </div>
   ) : (
     <div className='flex flex-col items-center justify-center h-screen'>
-      <h1 className='text-3xl font-bold text-center'>No movies Available</h1>
+      <div className='text-center max-w-md'>
+        <h1 className='text-3xl font-bold mb-4'>No Movies Currently Showing</h1>
+        <p className='text-gray-400 mb-6'>
+          No movies have been scheduled for showing yet. Please check back later or contact the admin to add movie shows.
+        </p>
+        <div className='text-sm text-gray-500'>
+          <p>• Movies will appear here once shows are added by admin</p>
+          <p>• You can only book movies that have scheduled shows</p>
+          <p>• Check back regularly for new releases</p>
+        </div>
+      </div>
     </div>
   )
 }

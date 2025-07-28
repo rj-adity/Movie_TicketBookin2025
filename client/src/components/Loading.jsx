@@ -9,7 +9,11 @@ const Loading = () => {
   useEffect(() => {
     if(next_url){
       setTimeout(() => {
-        navigate('/'+ next_url)
+        // Preserve URL parameters when redirecting
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentCompleted = urlParams.get('payment_completed');
+        const redirectUrl = paymentCompleted ? `/${next_url}?payment_completed=true` : `/${next_url}`;
+        navigate(redirectUrl);
       }, 8000)
     }
   }, [next_url, navigate])

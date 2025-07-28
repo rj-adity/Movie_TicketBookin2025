@@ -220,9 +220,33 @@ export const addShow = async (req, res) => {
 // Get all upcoming shows (no auth)
 export const getShows = async (req, res) => {
     try {
+        console.log('🔄 Fetching shows from database...');
+        
         const shows = await Show.find({ showDateTime: { $gte: new Date() } })
             .populate('movie')
             .sort({ showDateTime: 1 });
+
+        console.log(`📊 Found ${shows.length} shows in database`);
+        
+        if (shows.length > 0) {
+            console.log('📋 Sample shows:', shows.slice(0, 2).map(s => ({
+                id: s._id,
+                movieId: s.movie?._id,
+                movieTitle: s.movie?.title,
+                showDateTime: s.showDateTime
+            })));
+        }
+
+        if (shows.length === 0) {
+            // No shows scheduled - return empty array with informative message
+            console.log('ℹ️ No scheduled shows found in database');
+            return res.status(200).json({
+                success: true,
+                movies: [],
+                count: 0,
+                message: "No movies are currently showing. Please check back later or contact admin to add shows."
+            });
+        }
 
         // Get unique movie objects from shows with proper cast and dateTime formatting
         const uniqueMovies = [...new Map(shows.map(s => [s.movie._id.toString(), s.movie])).values()];
@@ -245,13 +269,16 @@ export const getShows = async (req, res) => {
             updatedAt: movie.updatedAt
         }));
 
+        console.log(`✅ Found ${formattedMovies.length} movies with scheduled shows`);
+        console.log('📋 Movie titles:', formattedMovies.map(m => m.title));
+
         res.status(200).json({
             success: true,
             movies: formattedMovies,
             count: formattedMovies.length
         });
     } catch (error) {
-        console.error('Error fetching shows:', error);
+        console.error('❌ Error fetching shows:', error);
         res.status(500).json({
             success: false,
             message: error.message,
@@ -335,6 +362,50 @@ export const getShow = async (req, res) => {
             success: false,
             message: error.message,
             error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
+}
+
+// Debug endpoint to check database content
+export const debugShows = async (req, res) => {
+    try {
+        console.log('🔍 Debugging shows and movies in database...');
+        
+        // Check all shows
+        const allShows = await Show.find({}).populate('movie').lean();
+        console.log(`📊 Total shows in database: ${allShows.length}`);
+        
+        // Check future shows
+        const futureShows = await Show.find({ showDateTime: { $gte: new Date() } }).populate('movie').lean();
+        console.log(`📊 Future shows in database: ${futureShows.length}`);
+        
+        // Check all movies
+        const allMovies = await Movie.find({}).lean();
+        console.log(`🎬 Total movies in database: ${allMovies.length}`);
+        
+        res.json({
+            success: true,
+            totalShows: allShows.length,
+            futureShows: futureShows.length,
+            totalMovies: allMovies.length,
+            sampleShows: allShows.slice(0, 3).map(s => ({
+                id: s._id,
+                movieId: s.movie?._id,
+                movieTitle: s.movie?.title,
+                showDateTime: s.showDateTime,
+                showPrice: s.showPrice
+            })),
+            sampleMovies: allMovies.slice(0, 3).map(m => ({
+                id: m._id,
+                title: m.title,
+                poster_path: m.poster_path
+            }))
+        });
+    } catch (error) {
+        console.error('❌ Debug error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
         });
     }
 }
