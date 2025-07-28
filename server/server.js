@@ -27,6 +27,7 @@ app.use(cors({
 app.get('/api/stripe/test', testWebhook);
 // Only the webhook endpoint uses express.raw
 app.use('/api/stripe', express.raw({type: 'application/json' }), stripeWebhooks );
+
 app.use(clerkMiddleware());
 
 // API Routes
@@ -54,7 +55,7 @@ app.use((error, req, res, next) => {
     });
 });
 
-// 404 handler
+// 404 handler LAST
 app.use('*', (req, res) => {
     res.status(404).json({
         success: false,
