@@ -1,61 +1,6 @@
 import stripe from 'stripe';
 import Booking from '../models/Booking.js';
 
-// Test endpoint to check webhook configuration
-export const testWebhook = async (req, res) => {
-    try {
-        console.log('🧪 Testing webhook configuration...');
-        
-        // Check environment variables
-        const hasSecretKey = !!process.env.STRIPE_SECRET_KEY;
-        const hasWebhookSecret = !!process.env.STRIPE_WEBHOOK_SECRET;
-        
-        console.log('🔑 Environment check:', {
-            hasSecretKey,
-            hasWebhookSecret,
-            secretKeyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 7) + '...',
-            webhookSecretPrefix: process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 7) + '...',
-            nodeEnv: process.env.NODE_ENV
-        });
-        
-        // Test Stripe connection
-        const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
-        const account = await stripeInstance.accounts.retrieve();
-        
-        // Get deployment URL
-        const deploymentUrl = process.env.VERCEL_URL 
-            ? `https://${process.env.VERCEL_URL}` 
-            : `${req.protocol}://${req.get('host')}`;
-        
-        res.json({
-            success: true,
-            message: 'Webhook configuration is valid',
-            environment: {
-                hasSecretKey,
-                hasWebhookSecret,
-                stripeAccountId: account.id,
-                stripeAccountType: account.type,
-                nodeEnv: process.env.NODE_ENV,
-                vercelUrl: process.env.VERCEL_URL
-            },
-            webhookUrl: `${deploymentUrl}/api/stripe`,
-            instructions: [
-                '1. Update your Stripe webhook endpoint URL to point to your Vercel deployment',
-                '2. Make sure the webhook secret matches your Vercel environment variables',
-                '3. Test with a payment to see webhook events',
-                '4. Check Vercel function logs for webhook processing'
-            ]
-        });
-    } catch (error) {
-        console.error('❌ Webhook test failed:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Webhook configuration error',
-            error: error.message
-        });
-    }
-}
-
 export const stripeWebhooks = async (request, response) => {
     console.log('🔄 Stripe webhook received');
     console.log('📋 Headers:', {

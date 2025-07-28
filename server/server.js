@@ -9,13 +9,12 @@ import showRouter from './routes/showRoutes.js';
 import adminRouter from './routes/adminRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import bookingRouter from './routes/bookingRoutes.js';
-import { stripeWebhooks, testWebhook } from './controllers/stripeWebhooks.js';
+import { stripeWebhooks } from './controllers/stripeWebhooks.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Stripe webhook routes FIRST (no body parsing before this)
-app.get('/api/stripe/test', testWebhook);
+// Stripe webhook route FIRST (no body parsing before this)
 app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks );
 
 // Now add body parsing and CORS for all other routes
