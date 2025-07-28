@@ -38,8 +38,6 @@ app.get('/', (req, res) => {
     });
 });
 
-
-
 app.use('/api/inngest', serve({ client: inngest, functions }));
 app.use('/api/show', showRouter);
 app.use('/api/admin', adminRouter);
@@ -64,37 +62,37 @@ app.use('*', (req, res) => {
     });
 });
 
-// Main function to start the server
-const startServer = async () => {
-    try {
-        // 1. Connect to the database
-        await connectDB();
-        console.log('📊 Database: Connected');
-
-        // 2. Start listening for requests ONLY after the DB is connected
-        app.listen(port, () => {
-            console.log(`✅ Server Running at http://localhost:${port}`);
-            console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
-        }).on('error', (err) => {
-            // Handle port-in-use error if you still need that functionality
-            if (err.code === 'EADDRINUSE') {
-                console.log(`⚠️  Port ${port} is busy, please use a different port.`);
-            } else {
-                console.error('❌ Server error:', err);
-            }
+// Only start the server locally (not on Vercel)
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
+    const startServer = async () => {
+        try {
+            await connectDB();
+            console.log('📊 Database: Connected');
+            app.listen(port, () => {
+                console.log(`✅ Server Running at http://localhost:${port}`);
+                console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
+            }).on('error', (err) => {
+                if (err.code === 'EADDRINUSE') {
+                    console.log(`⚠️  Port ${port} is busy, please use a different port.`);
+                } else {
+                    console.error('❌ Server error:', err);
+                }
+                process.exit(1);
+            });
+        } catch (error) {
+            console.error('Database initialization failed:', error);
             process.exit(1);
-        });
-
-    } catch (error) {
-        console.error('Database initialization failed:', error);
-        process.exit(1);
-    }
-};
-
-// Start the server
-if (process.env.NODE_ENV !== 'production') {
+        }
+    };
     startServer();
+} else {
+    // On Vercel, connect to DB on first request (cold start)
+    connectDB().then(() => {
+        console.log('📊 Database: Connected (Vercel)');
+    }).catch((error) => {
+        console.error('Database initialization failed (Vercel):', error);
+    });
 }
 
-// For Vercel serverless deployment
+// Always export the app for Vercel
 export default app;
