@@ -92,6 +92,31 @@ export const stripeWebhooks = async (request, response) => {
         console.log("📨 Processing Stripe event:", event.type);
         console.log("🆔 Event ID:", event.id);
         
+        // Helper to update booking by bookingId
+        const updateBookingPaid = async (bookingId, source) => {
+            if (!bookingId) return false;
+            try {
+                const updateResult = await Booking.findByIdAndUpdate(
+                    bookingId, 
+                    { 
+                        isPaid: true, 
+                        paymentLink: "",
+                        updatedAt: new Date()
+                    },
+                    { new: true }
+                );
+                if (updateResult) {
+                    console.log(`✅ Booking updated as paid from ${source}:`, bookingId);
+                    return true;
+                } else {
+                    console.error(`❌ Booking not found for update from ${source}:`, bookingId);
+                }
+            } catch (err) {
+                console.error(`❌ Error updating booking from ${source}:`, err);
+            }
+            return false;
+        };
+
         switch (event.type) {
             case 'payment_intent.succeeded': {
                 console.log('💰 Processing payment_intent.succeeded');
@@ -99,49 +124,27 @@ export const stripeWebhooks = async (request, response) => {
                 console.log("💳 PaymentIntent ID:", paymentIntent.id);
                 console.log("💵 Amount:", paymentIntent.amount);
                 console.log("💱 Currency:", paymentIntent.currency);
-                
                 try {
                     const sessionList = await stripeInstance.checkout.sessions.list({
                         payment_intent: paymentIntent.id,
                     });
-
-                    const session = sessionList.data[0];
-                    console.log("🛒 Stripe session found:", session ? 'Yes' : 'No');
-                    
-                    if (!session) {
-                        console.error("❌ No session found for payment intent", paymentIntent.id);
+                    if (!sessionList.data || sessionList.data.length === 0) {
+                        console.error("❌ No sessions found for payment intent", paymentIntent.id);
                         break;
                     }
-                    
-                    console.log("📋 Session metadata:", session.metadata);
-                    const {bookingId} = session.metadata || {};
-                    
-                    if (!bookingId) {
-                        console.error("❌ No bookingId in session metadata", session.metadata);
-                        break;
+                    let bookingUpdated = false;
+                    for (const session of sessionList.data) {
+                        const { bookingId } = session.metadata || {};
+                        if (bookingId) {
+                            console.log("🎫 Found bookingId in session:", bookingId);
+                            const updated = await updateBookingPaid(bookingId, 'payment_intent.succeeded');
+                            if (updated) bookingUpdated = true;
+                        } else {
+                            console.warn("⚠️ No bookingId in session metadata", session.metadata);
+                        }
                     }
-
-                    console.log("🎫 Updating booking:", bookingId);
-                    const updateResult = await Booking.findByIdAndUpdate(
-                        bookingId, 
-                        { 
-                            isPaid: true, 
-                            paymentLink: "",
-                            updatedAt: new Date()
-                        },
-                        { new: true }
-                    );
-                    
-                    if (updateResult) {
-                        console.log("✅ Booking updated as paid:", bookingId);
-                        console.log("📊 Updated booking details:", {
-                            id: updateResult._id,
-                            isPaid: updateResult.isPaid,
-                            amount: updateResult.amount,
-                            clerkUserId: updateResult.clerkUserId
-                        });
-                    } else {
-                        console.error("❌ Booking not found for update:", bookingId);
+                    if (!bookingUpdated) {
+                        console.error("❌ No booking updated for payment_intent.succeeded");
                     }
                 } catch (sessionError) {
                     console.error("❌ Error processing session:", sessionError);
@@ -153,25 +156,11 @@ export const stripeWebhooks = async (request, response) => {
                 const session = event.data.object;
                 console.log("🛒 Session ID:", session.id);
                 console.log("📋 Session metadata:", session.metadata);
-                
-                const {bookingId} = session.metadata || {};
+                const { bookingId } = session.metadata || {};
                 if (bookingId) {
-                    console.log("🎫 Updating booking from session:", bookingId);
-                    const updateResult = await Booking.findByIdAndUpdate(
-                        bookingId, 
-                        { 
-                            isPaid: true, 
-                            paymentLink: "",
-                            updatedAt: new Date()
-                        },
-                        { new: true }
-                    );
-                    
-                    if (updateResult) {
-                        console.log("✅ Booking updated as paid from session:", bookingId);
-                    } else {
-                        console.error("❌ Booking not found for session update:", bookingId);
-                    }
+                    await updateBookingPaid(bookingId, 'checkout.session.completed');
+                } else {
+                    console.warn("⚠️ No bookingId in session metadata for checkout.session.completed", session.metadata);
                 }
                 break;
             }
