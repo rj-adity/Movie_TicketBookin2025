@@ -20,8 +20,15 @@ const validateShowInput = (movieId, showsInput, showPrice) => {
     
     // Validate each show input
     showsInput.forEach((show, index) => {
-        if (!show.date || !show.time || !Array.isArray(show.time)) {
-            throw new Error(`Invalid show at index ${index}: date and time array are required`);
+        if (!show.date || !show.time) {
+            throw new Error(`Invalid show at index ${index}: date and time are required`);
+        }
+        // Accept both string and array formats for time
+        if (typeof show.time === 'string') {
+            show.time = [show.time];
+        }
+        if (!Array.isArray(show.time) || show.time.length === 0) {
+            throw new Error(`Invalid show at index ${index}: time must be a non-empty array`);
         }
     });
 };
