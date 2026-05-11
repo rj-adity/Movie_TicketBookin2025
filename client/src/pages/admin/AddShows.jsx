@@ -86,8 +86,10 @@ const AddShows = () => {
                 toast.error(data.message || 'Failed to add show');
             }
         } catch (error) {
-            console.error("Submission :", error);
-            toast.error(error.response?.data?.message || 'Error adding show. Please try again later.');
+            console.error("Submission Error:", error);
+            console.error("Error response data:", error.response?.data);
+            const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+            toast.error(`Error: ${errorMsg}`);
         } finally {
             setAddingShow(false)
         }
