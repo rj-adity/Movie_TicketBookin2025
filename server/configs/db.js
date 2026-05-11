@@ -1,17 +1,12 @@
 import mongoose from "mongoose";
 
-let cached = global.mongoose;
-if (!cached) {
-    global.mongoose = { conn: null, promise: null };
-}
-
 const connectDB = async () => {
-    if (cached.conn) {
+    if (mongoose.connection.readyState >= 1) {
         console.log('Using existing database connection');
-        return cached.conn;
+        return mongoose.connection;
     }
 
-    if (!cached.promise) {
+    try {
         mongoose.set('strictQuery', false);
 
         const options = {
@@ -21,17 +16,10 @@ const connectDB = async () => {
             family: 4
         };
 
-        cached.promise = mongoose.connect(process.env.MONGODB_URI, options).then((mongoose) => {
-            console.log('Database Connected');
-            return mongoose;
-        });
-    }
-
-    try {
-        cached.conn = await cached.promise;
-        return cached.conn;
+        const conn = await mongoose.connect(process.env.MONGODB_URI, options);
+        console.log('Database Connected');
+        return conn;
     } catch (error) {
-        cached.promise = null;
         console.error('Database connection failed:', error.message);
         throw error;
     }
