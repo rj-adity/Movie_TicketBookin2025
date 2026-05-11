@@ -21,7 +21,7 @@ export const protectAdmin = async (req, res, next) => {
             });
         }
 
-        if (user.privateMetadata?.role !== 'admin') {
+        if (user.publicMetadata?.role !== 'admin') {
             return res.status(403).json({
                 success: false,
                 message: "Admin access required"
