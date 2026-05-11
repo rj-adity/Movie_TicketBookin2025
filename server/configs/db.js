@@ -1,44 +1,38 @@
 import mongoose from "mongoose";
 
-let isConnected = false;
+let cached = global.mongoose;
+if (!cached) {
+    global.mongoose = { conn: null, promise: null };
+}
 
 const connectDB = async () => {
-    if (isConnected) {
+    if (cached.conn) {
         console.log('Using existing database connection');
-        return;
+        return cached.conn;
     }
 
-    try {
-        // Set mongoose options for better serverless performance
+    if (!cached.promise) {
         mongoose.set('strictQuery', false);
-        
+
         const options = {
-            bufferCommands: false,
             maxPoolSize: 10,
-            serverSelectionTimeoutMS: 5000,
+            serverSelectionTimeoutMS: 30000,
             socketTimeoutMS: 45000,
             family: 4
         };
 
-        const conn = await mongoose.connect(`${process.env.MONGODB_URI}`);
-        
-        isConnected = true;
-        console.log(`Database Connected: ${conn.connection.host}`);
-
-        // Handle connection events
-        mongoose.connection.on('error', (err) => {
-            console.error('Database connection error:', err);
-            isConnected = false;
+        cached.promise = mongoose.connect(process.env.MONGODB_URI, options).then((mongoose) => {
+            console.log('Database Connected');
+            return mongoose;
         });
+    }
 
-        mongoose.connection.on('disconnected', () => {
-            console.log('Database disconnected');
-            isConnected = false;
-        });
-
+    try {
+        cached.conn = await cached.promise;
+        return cached.conn;
     } catch (error) {
+        cached.promise = null;
         console.error('Database connection failed:', error.message);
-        isConnected = false;
         throw error;
     }
 };
