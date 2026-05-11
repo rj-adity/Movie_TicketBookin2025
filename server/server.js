@@ -20,9 +20,7 @@ app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks )
 // Now add body parsing and CORS for all other routes
 app.use(express.json({ limit: '10mb' }));
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? ['https://movie-ticket-bookin20252.vercel.app', 'https://moviebooking2025-server.vercel.app']
-        : ['http://localhost:3000', 'http://localhost:5173'],
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'https://movie-ticket-bookin20252.vercel.app', 'https://moviebooking2025-server.vercel.app'],
     credentials: true
 }));
 
