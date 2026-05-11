@@ -8,7 +8,7 @@ const Footer = () => {
                 <div className="md:max-w-96">
                     <img className="w-36 h-auto" src={assets.logo} alt="logo" />
                     <p className="mt-6 text-sm">
-                        Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
+                        Chitrapat is a comprehensive movie booking website that allows users to browse and book movie shows with ease. It features real-time seat selection, secure payment integration, and email notifications for booking confirmations and reminders. The website also includes an admin interface for managing shows and bookings efficiently.
                     </p>
                     <div className="flex items-center gap-2 mt-4">
                         <img src={assets.googlePlay} alt="google play" className="h-9 w-auto" />

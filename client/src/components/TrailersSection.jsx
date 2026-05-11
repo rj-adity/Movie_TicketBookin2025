@@ -18,7 +18,14 @@ const TrailerSection = () => {
           <iframe
             width="960"
             height="540"
-            src={currentTrailer.videoUrl.replace("watch?v=", "embed/")}
+            src={(() => {
+              const url = currentTrailer.videoUrl;
+              if (url.includes('youtu.be')) {
+                const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+                return `https://www.youtube.com/embed/${videoId}`;
+              }
+              return url.replace("watch?v=", "embed/");
+            })()}
             title="YouTube trailer"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

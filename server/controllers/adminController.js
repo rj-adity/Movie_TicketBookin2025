@@ -44,11 +44,33 @@ const getUserDetailsById = async (clerkUserId) => {
 };
 
 // API to check if user is admin
-export const isAdmin = (req, res, next) => {
-   res.json({
-    success: true,
-    isAdmin: true
-   })
+export const isAdmin = async (req, res, next) => {
+    try {
+        const { userId } = req.auth();
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                isAdmin: false,
+                message: 'Not authenticated'
+            });
+        }
+
+        const user = await clerkClient.users.getUser(userId);
+        const isAdminUser = user.publicMetadata?.role === 'admin';
+
+        res.json({
+            success: true,
+            isAdmin: isAdminUser
+        });
+    } catch (error) {
+        console.error('Error checking admin status:', error);
+        res.status(500).json({
+            success: false,
+            isAdmin: false,
+            message: error.message
+        });
+    }
 }
 
 // Debug endpoint to test Clerk integration
