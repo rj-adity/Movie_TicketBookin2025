@@ -21,7 +21,7 @@ app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks )
 app.use(express.json({ limit: '10mb' }));
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-        ? ['https://movie-ticket-bookin20252.vercel.app', 'https://movie-ticket-bookin20252.vercel.app/']
+        ? ['https://movie-ticket-bookin20252.vercel.app', 'https://moviebooking2025-server.vercel.app']
         : ['http://localhost:3000', 'http://localhost:5173'],
     credentials: true
 }));
