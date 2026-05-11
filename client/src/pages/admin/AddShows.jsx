@@ -59,11 +59,13 @@ const AddShows = () => {
     };
 
     const handleSubmit = async () => {
+        setAddingShow(true)
         try {
-            setAddingShow(true)
 
             if(!selectedMovie || Object.keys(dateTimeSelection).length === 0 || !showPrice) {
-               return toast('Missing required fields');
+               toast.error('Missing required fields');
+               setAddingShow(false);
+               return;
             }
             const showsInput = Object.entries(dateTimeSelection).map(([date, time]) => ({date, time}));
 
@@ -85,9 +87,10 @@ const AddShows = () => {
             }
         } catch (error) {
             console.error("Submission :", error);
-            toast.error('Error adding show. Please try again later.');
+            toast.error(error.response?.data?.message || 'Error adding show. Please try again later.');
+        } finally {
+            setAddingShow(false)
         }
-        setAddingShow(false)
     }
 
     useEffect(() => {

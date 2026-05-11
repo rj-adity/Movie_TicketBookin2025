@@ -89,100 +89,94 @@ export const getNowPlayingMovies = async (req, res) => {
 
 // Add new shows for a movie (Admin only)
 export const addShow = async (req, res) => {
-    const session = await mongoose.startSession();
-    
     try {
         const { movieId, showsInput, showPrice } = req.body;
-        
+
         // Validate input
         validateShowInput(movieId, showsInput, showPrice);
-        
-        await session.withTransaction(async () => {
-            let movie = await Movie.findById(movieId).session(session);
 
-            if (!movie) {
-                // Validate TMDB API key
-                if (!process.env.TMDB_API_KEY) {
-                    throw new Error('TMDB API key is not configured');
+        let movie = await Movie.findById(movieId);
+
+        if (!movie) {
+            // Validate TMDB API key
+            if (!process.env.TMDB_API_KEY) {
+                throw new Error('TMDB API key is not configured');
+            }
+
+            // Fetch movie details and credits from TMDB API
+            const [movieDetailsResponse, movieCreditsResponse] = await Promise.all([
+                axios.get(`https://api.themoviedb.org/3/movie/${movieId}`, {
+                    headers: { Authorization: `Bearer ${process.env.TMDB_API_KEY}` },
+                    timeout: 10000
+                }),
+                axios.get(`https://api.themoviedb.org/3/movie/${movieId}/credits`, {
+                    headers: { Authorization: `Bearer ${process.env.TMDB_API_KEY}` },
+                    timeout: 10000
+                })
+            ]);
+
+            const movieApiData = movieDetailsResponse.data;
+            const movieCreditsData = movieCreditsResponse.data;
+
+            // Ensure cast data is properly formatted and not empty
+            const formattedCast = (movieCreditsData.cast || []).map(castMember => ({
+                cast_id: castMember.cast_id,
+                character: castMember.character || "",
+                credit_id: castMember.credit_id,
+                gender: castMember.gender,
+                id: castMember.id,
+                name: castMember.name || "",
+                order: castMember.order,
+                profile_path: castMember.profile_path
+            }));
+
+            const movieDetails = {
+                _id: movieId,
+                title: movieApiData.title || "",
+                overview: movieApiData.overview || "",
+                poster_path: movieApiData.poster_path || "",
+                backdrop_path: movieApiData.backdrop_path || "",
+                genres: movieApiData.genres || [],
+                casts: formattedCast,
+                release_date: movieApiData.release_date || "",
+                original_language: movieApiData.original_language || "",
+                tagline: movieApiData.tagline || "",
+                vote_average: movieApiData.vote_average || 0,
+                runtime: movieApiData.runtime || 0,
+            };
+
+            movie = await Movie.create(movieDetails);
+        }
+
+        const showsToCreate = [];
+        showsInput.forEach(show => {
+            const showDate = show.date;
+            show.time.forEach(time => {
+                const dateTimeString = `${showDate}T${time}`;
+                const showDateTime = new Date(dateTimeString);
+
+                // Validate date
+                if (isNaN(showDateTime.getTime())) {
+                    throw new Error(`Invalid date/time format: ${dateTimeString}`);
                 }
 
-                // Fetch movie details and credits from TMDB API
-                const [movieDetailsResponse, movieCreditsResponse] = await Promise.all([
-                    axios.get(`https://api.themoviedb.org/3/movie/${movieId}`, {
-                        headers: { Authorization: `Bearer ${process.env.TMDB_API_KEY}` },
-                        timeout: 10000
-                    }),
-                    axios.get(`https://api.themoviedb.org/3/movie/${movieId}/credits`, {
-                        headers: { Authorization: `Bearer ${process.env.TMDB_API_KEY}` },
-                        timeout: 10000
-                    })
-                ]);
+                // Check if show is in the future
+                if (showDateTime <= new Date()) {
+                    throw new Error(`Show time must be in the future: ${dateTimeString}`);
+                }
 
-                const movieApiData = movieDetailsResponse.data;
-                const movieCreditsData = movieCreditsResponse.data;
-
-                // Ensure cast data is properly formatted and not empty
-                const formattedCast = (movieCreditsData.cast || []).map(castMember => ({
-                    cast_id: castMember.cast_id,
-                    character: castMember.character || "",
-                    credit_id: castMember.credit_id,
-                    gender: castMember.gender,
-                    id: castMember.id,
-                    name: castMember.name || "",
-                    order: castMember.order,
-                    profile_path: castMember.profile_path
-                }));
-
-                const movieDetails = {
-                    _id: movieId,
-                    title: movieApiData.title || "",
-                    overview: movieApiData.overview || "",
-                    poster_path: movieApiData.poster_path || "",
-                    backdrop_path: movieApiData.backdrop_path || "",
-                    genres: movieApiData.genres || [],
-                    casts: formattedCast, // Properly formatted cast array
-                    release_date: movieApiData.release_date || "",
-                    original_language: movieApiData.original_language || "",
-                    tagline: movieApiData.tagline || "",
-                    vote_average: movieApiData.vote_average || 0,
-                    runtime: movieApiData.runtime || 0,
-                };
-
-                // Save movie to DB
-                movie = await Movie.create([movieDetails], { session });
-                movie = movie[0]; // create returns array when using session
-            }
-
-            const showsToCreate = [];
-            showsInput.forEach(show => {
-                const showDate = show.date;
-                show.time.forEach(time => {
-                    const dateTimeString = `${showDate}T${time}`;
-                    const showDateTime = new Date(dateTimeString);
-                    
-                    // Validate date
-                    if (isNaN(showDateTime.getTime())) {
-                        throw new Error(`Invalid date/time format: ${dateTimeString}`);
-                    }
-                    
-                    // Check if show is in the future
-                    if (showDateTime <= new Date()) {
-                        throw new Error(`Show time must be in the future: ${dateTimeString}`);
-                    }
-                    
-                    showsToCreate.push({
-                        movie: movieId,
-                        showDateTime,
-                        showPrice,
-                        occupiedSeats: {}
-                    });
+                showsToCreate.push({
+                    movie: movieId,
+                    showDateTime,
+                    showPrice,
+                    occupiedSeats: {}
                 });
             });
-
-            if (showsToCreate.length > 0) {
-                await Show.insertMany(showsToCreate, { session });
-            }
         });
+
+        if (showsToCreate.length > 0) {
+            await Show.insertMany(showsToCreate);
+        }
 
         res.status(201).json({
             success: true,
@@ -192,35 +186,33 @@ export const addShow = async (req, res) => {
 
     } catch (error) {
         console.error('Error adding show:', error);
-        
+
         if (error.response?.status === 404) {
             return res.status(404).json({
                 success: false,
                 message: 'Movie not found in TMDB database'
             });
         }
-        
+
         if (error.response?.status === 401) {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid TMDB API key'
             });
         }
-        
+
         if (error.code === 'ECONNABORTED') {
             return res.status(408).json({
                 success: false,
                 message: 'Request timeout - please try again'
             });
         }
-        
+
         res.status(400).json({
             success: false,
             message: error.message,
             error: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
-    } finally {
-        await session.endSession();
     }
 }
 
