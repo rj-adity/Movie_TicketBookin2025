@@ -48,6 +48,8 @@ export const isAdmin = async (req, res, next) => {
     try {
         const { userId } = req.auth();
 
+        console.log('isAdmin check - userId:', userId);
+
         if (!userId) {
             return res.status(401).json({
                 success: false,
@@ -57,7 +59,10 @@ export const isAdmin = async (req, res, next) => {
         }
 
         const user = await clerkClient.users.getUser(userId);
+        console.log('isAdmin check - user publicMetadata:', user.publicMetadata);
+
         const isAdminUser = user.publicMetadata?.role === 'admin';
+        console.log('isAdmin check - isAdminUser:', isAdminUser);
 
         res.json({
             success: true,
